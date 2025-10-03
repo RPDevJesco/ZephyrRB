@@ -1,5 +1,7 @@
 # 💎 Zephyr WASM
 
+[![Gem Version](https://badge.fury.io/rb/zephyr_rb.svg)](https://badge.fury.io/rb/zephyr_rb)
+
 **Build reactive web components using Ruby and WebAssembly**
 
 Zephyr WASM is a lightweight framework for creating interactive web components using Ruby, compiled to WebAssembly and running entirely in the browser. Write your UI logic in Ruby with a declarative template syntax, and let the browser handle the rest.
@@ -13,6 +15,14 @@ Zephyr WASM is a lightweight framework for creating interactive web components u
 - **Lifecycle Hooks** - `on_connect` and `on_disconnect` callbacks
 - **Event Handling** - First-class support for DOM events
 - **Template DSL** - Clean, declarative component templates
+
+## 🚀 Build ZephyrRB
+
+run the following script:
+```bash
+ruby build.rb
+```
+this will generate the zephyrRB.js file
 
 ## 🚀 Quick Start
 
@@ -40,21 +50,11 @@ npx http-server -p 8000
     <title>My Zephyr App</title>
 </head>
 <body>
-    <!-- Use your components -->
-    <x-counter initial="5"></x-counter>
+<!-- Use your components -->
+<x-counter initial="5"></x-counter>
 
-    <!-- Load Ruby WASM -->
-    <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
-
-    <!-- Load your Ruby files -->
-    <script type="text/ruby" src="registry.rb"></script>
-    <script type="text/ruby" src="dom_builder.rb"></script>
-    <script type="text/ruby" src="component.rb"></script>
-    <script type="text/ruby" src="zephyr_wasm.rb"></script>
-    <script type="text/ruby" src="components.rb"></script>
-
-    <!-- Load the bridge -->
-    <script src="zephyr-bridge.js"></script>
+<!-- Load required items from ZephyrRB-->
+<script src="/dist/zephyrRB.js"></script>
 </body>
 </html>
 ```
@@ -98,14 +98,23 @@ Visit `http://localhost:8000` and see your component in action! 🎉
 ## 📦 File Structure
 
 ```
-your-project/
-├── index.html           # Your HTML page
-├── zephyr-bridge.js     # JavaScript bridge (required)
-├── registry.rb          # Component registry
-├── dom_builder.rb       # DOM manipulation
-├── component.rb         # Component base class
-├── zephyr_wasm.rb       # Core framework
-└── components.rb        # Your component definitions
+ZephyrRB/
+├── src/
+│   ├── browser.script.iife.js
+│   ├── component.rb
+│   ├── components.rb
+│   ├── dom_builder.rb
+│   ├── registry.rb
+│   ├── zephyr-bridge.js
+│   └── zephyr_wasm.rb
+├── dist/ 
+│   └── zephyrRB.js
+├── lib/ 
+│   ├── cli.rb
+│   └── version.rb
+├── README.md
+├── zephyr_rb.gemspec
+└── build.rb
 ```
 
 ## 📚 Component API

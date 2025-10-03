@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "@ruby/3.3-wasm-wasi": "^2.7.1"
-  }
-}

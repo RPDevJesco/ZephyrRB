@@ -4,7 +4,7 @@ require "js"
 # =============================================================================
 # BUTTON COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-button-rb') do
+ZephyrWasm.component('x-button') do
   observed_attributes :label, :disabled, :variant
 
   on_connect do
@@ -57,7 +57,7 @@ end
 # =============================================================================
 # INPUT COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-input-rb') do
+ZephyrWasm.component('x-input') do
   observed_attributes :value, :type, :placeholder, :required, :disabled, :error, :label
 
   on_connect do
@@ -132,7 +132,7 @@ end
 # =============================================================================
 # SELECT COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-select-rb') do
+ZephyrWasm.component('x-select') do
   observed_attributes :value, :options, :placeholder, :disabled, :label
 
   on_connect do
@@ -221,7 +221,7 @@ end
 # =============================================================================
 # CHECKBOX COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-checkbox-rb') do
+ZephyrWasm.component('x-checkbox') do
   observed_attributes :checked, :label, :disabled
 
   on_connect do
@@ -277,7 +277,7 @@ end
 # =============================================================================
 # TEXTAREA COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-textarea-rb') do
+ZephyrWasm.component('x-textarea') do
   observed_attributes :value, :placeholder, :rows, :disabled, :label
 
   on_connect do
@@ -341,7 +341,7 @@ end
 # =============================================================================
 # CARD COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-card-rb') do
+ZephyrWasm.component('x-card') do
   observed_attributes :variant, :elevated, :bordered
 
   on_connect do
@@ -387,7 +387,7 @@ end
 # =============================================================================
 # TABS COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-tabs-rb') do
+ZephyrWasm.component('x-tabs') do
   observed_attributes :active
 
   on_connect do
@@ -457,7 +457,7 @@ end
 # =============================================================================
 # ACCORDION COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-accordion-rb') do
+ZephyrWasm.component('x-accordion') do
   observed_attributes :expanded
 
   on_connect do
@@ -532,7 +532,7 @@ end
 # =============================================================================
 # DIALOG/MODAL COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-dialog-rb') do
+ZephyrWasm.component('x-dialog') do
   observed_attributes :open, :title
 
   on_connect do
@@ -628,7 +628,7 @@ end
 # =============================================================================
 # BREADCRUMB COMPONENT
 # =============================================================================
-ZephyrWasm.component('x-breadcrumb-rb') do
+ZephyrWasm.component('x-breadcrumb') do
   observed_attributes :path
 
   on_connect do
@@ -698,7 +698,7 @@ end
 # =============================================================================
 # VIRTUAL LIST COMPONENT (Simplified)
 # =============================================================================
-ZephyrWasm.component('x-virtual-list-rb') do
+ZephyrWasm.component('x-virtual-list') do
   observed_attributes 'item-count', 'item-height'
 
   on_connect do
@@ -889,7 +889,7 @@ ZephyrWasm.component('x-todo-list') do
 end
 
 # Tabs component - demonstrates more complex UI
-ZephyrWasm.component('x-tabs-wasm') do
+ZephyrWasm.component('x-tabs') do
   observed_attributes :active
 
   on_connect do
