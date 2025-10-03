@@ -326,3 +326,4 @@ Inspired by:
 
 This is a technical demonstration showing that Ruby WASM components are possible and practical. For production use, significant work remains on performance, tooling, and ecosystem.
 ruby -run -ehttpd . -p8000
+npm i @ruby/3.3-wasm-wasi 
