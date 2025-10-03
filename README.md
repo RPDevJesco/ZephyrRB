@@ -1,4 +1,4 @@
-# 💎 Zephyr WASM
+# 💎 zephyr_rb
 
 [![Gem Version](https://badge.fury.io/rb/zephyr_rb.svg)](https://badge.fury.io/rb/zephyr_rb)
 
