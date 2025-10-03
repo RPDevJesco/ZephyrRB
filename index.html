@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Zephyr WASM - Complete Component Showcase</title>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5rem;
+        }
+        h2 {
+            color: #1f2937;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .loading {
+            background: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+        #log {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+        .counter-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+        .counter-value {
+            font-size: 2rem;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+        .toggle-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+        .toggle {
+            padding: 1rem 2rem;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .toggle.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        .demo-section {
+            margin: 1.5rem 0;
+        }
+        .form-demo {
+            display: grid;
+            gap: 1rem;
+        }
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 14px;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body>
+<h1>💎 Zephyr WASM - Complete Component Showcase</h1>
+
+<div class="card">
+    <h2>🔍 Loading Log</h2>
+    <div id="log">Initializing...</div>
+</div>
+
+<div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Initializing Ruby WebAssembly...</p>
+</div>
+
+<div id="content" style="display:none;">
+    <!-- Counter Component -->
+    <div class="card">
+        <h2>🔢 Counter Component</h2>
+        <p>Interactive counter with increment/decrement buttons</p>
+        <x-counter initial="5"></x-counter>
+    </div>
+
+    <!-- Toggle Component -->
+    <div class="card">
+        <h2>🎚️ Toggle Component</h2>
+        <p>Toggle button with active/inactive states</p>
+        <x-toggle label="Dark Mode" checked="false"></x-toggle>
+        <div id="toggle-status" class="status-message status-info" style="display:none;">
+            Toggle is: <span id="toggle-value">OFF</span>
+        </div>
+    </div>
+
+    <!-- Form Components -->
+    <div class="card">
+        <h2>📝 Form Components</h2>
+        <p>Complete form controls with validation</p>
+        <div class="form-demo">
+            <x-input-rb
+                    label="Full Name"
+                    placeholder="Enter your name"
+                    value="">
+            </x-input-rb>
+
+            <x-input-rb
+                    label="Email Address"
+                    type="email"
+                    placeholder="your@email.com">
+            </x-input-rb>
+
+            <x-select-rb
+                    label="Country"
+                    placeholder="Select a country"
+                    options='[{"value":"us","label":"United States"},{"value":"uk","label":"United Kingdom"},{"value":"ca","label":"Canada"},{"value":"au","label":"Australia"}]'>
+            </x-select-rb>
+
+            <x-checkbox-rb
+                    label="I agree to the terms and conditions">
+            </x-checkbox-rb>
+
+            <x-textarea-rb
+                    label="Message"
+                    placeholder="Enter your message here..."
+                    rows="4">
+            </x-textarea-rb>
+
+            <x-button-rb
+                    label="Submit Form"
+                    variant="primary">
+            </x-button-rb>
+        </div>
+    </div>
+
+    <!-- Card Component Variants -->
+    <div class="two-col">
+        <x-card-rb variant="primary" elevated>
+            <h3 style="margin-top:0;">Primary Card</h3>
+            <p>This is a primary card with elevation</p>
+        </x-card-rb>
+
+        <x-card-rb variant="success" bordered>
+            <h3 style="margin-top:0;">Success Card</h3>
+            <p>This is a success card with border</p>
+        </x-card-rb>
+
+        <x-card-rb variant="warning">
+            <h3 style="margin-top:0;">Warning Card</h3>
+            <p>This is a warning card</p>
+        </x-card-rb>
+
+        <x-card-rb variant="danger" elevated>
+            <h3 style="margin-top:0;">Danger Card</h3>
+            <p>This is a danger card with elevation</p>
+        </x-card-rb>
+    </div>
+
+    <!-- Tabs Component -->
+    <div class="card">
+        <h2>📑 Tabs Component</h2>
+        <p>Tabbed interface for organizing content</p>
+        <x-tabs-rb active="tab1"></x-tabs-rb>
+    </div>
+
+    <!-- Accordion Component -->
+    <div class="card">
+        <h2>📋 Accordion Component</h2>
+        <p>Collapsible sections for organizing information</p>
+        <x-accordion-rb expanded="section1"></x-accordion-rb>
+    </div>
+
+    <!-- Dialog Component -->
+    <div class="card">
+        <h2>💬 Dialog/Modal Component</h2>
+        <p>Modal dialog for important messages</p>
+        <x-button-rb
+                label="Open Dialog"
+                variant="primary"
+                onclick="document.querySelector('x-dialog-rb').setAttribute('open', 'true')">
+        </x-button-rb>
+        <x-dialog-rb title="Example Dialog" open="false">
+            <p>This is a modal dialog component built with Ruby WASM!</p>
+            <p>It features a backdrop, close button, and can contain any content.</p>
+        </x-dialog-rb>
+    </div>
+
+    <!-- Breadcrumb Component -->
+    <div class="card">
+        <h2>🍞 Breadcrumb Navigation</h2>
+        <p>Hierarchical navigation breadcrumbs</p>
+        <x-breadcrumb-rb
+                path='[{"label":"Home","href":"#"},{"label":"Products","href":"#"},{"label":"Electronics","href":"#"},{"label":"Laptops"}]'>
+        </x-breadcrumb-rb>
+    </div>
+
+    <!-- Virtual List Component -->
+    <div class="card">
+        <h2>📜 Virtual List Component</h2>
+        <p>Efficiently renders large lists (1000+ items)</p>
+        <x-virtual-list-rb item-count="1000" item-height="40"></x-virtual-list-rb>
+    </div>
+
+    <!-- Button Variants -->
+    <div class="card">
+        <h2>🎨 Button Variants</h2>
+        <p>Different button styles and states</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <x-button-rb label="Default" variant="default"></x-button-rb>
+            <x-button-rb label="Primary" variant="primary"></x-button-rb>
+            <x-button-rb label="Success" variant="success"></x-button-rb>
+            <x-button-rb label="Danger" variant="danger"></x-button-rb>
+            <x-button-rb label="Disabled" variant="primary" disabled="true"></x-button-rb>
+        </div>
+    </div>
+
+    <!-- Advanced Tabs -->
+    <div class="card">
+        <h2>🗂️ Advanced Tabs (WASM)</h2>
+        <p>Alternative tabs implementation</p>
+        <x-tabs-wasm active="tab1"></x-tabs-wasm>
+    </div>
+
+    <!-- Todo List Component -->
+    <div class="card">
+        <h2>✅ Todo List Component</h2>
+        <p>Full-featured todo list with add/remove/toggle</p>
+        <x-todo-list></x-todo-list>
+    </div>
+
+    <!-- Component Stats -->
+    <div class="card">
+        <h2>📊 Component Statistics</h2>
+        <div id="stats" style="font-size: 14px; line-height: 1.8;">
+            <p><strong>Total Components:</strong> <span id="total-components">0</span></p>
+            <p><strong>Active Components:</strong> <span id="active-components">0</span></p>
+            <p><strong>Ruby WASM Status:</strong> <span id="wasm-status" style="color: #10b981;">✓ Running</span></p>
+        </div>
+    </div>
+</div>
+
+<!-- Ruby WASM VM -->
+<script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+
+<!-- Logger -->
+<script>
+    function log(msg) {
+        const el = document.getElementById('log');
+        const timestamp = new Date().toLocaleTimeString();
+        el.innerHTML += `<div>[${timestamp}] ${msg}</div>`;
+        el.scrollTop = el.scrollHeight;
+        console.log(msg);
+    }
+    window.log = log;
+</script>
+
+<!-- Ruby source files -->
+<script type="text/ruby" src="registry.rb"></script>
+<script type="text/ruby" src="dom_builder.rb"></script>
+<script type="text/ruby" src="component.rb"></script>
+<script type="text/ruby" src="zephyr_wasm.rb"></script>
+<script type="text/ruby" src="components.rb"></script>
+
+<!-- Bridge for registering components -->
+<script src="zephyr-bridge.js"></script>
+
+<!-- Initialize and show content -->
+<script>
+    // Wait for components to be registered
+    (function showWhenReady() {
+        const registry = window.ZephyrWasmRegistry || {};
+        const componentCount = Object.keys(registry).length;
+
+        if (componentCount > 0) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            log(`🎉 Zephyr WASM is ready with ${componentCount} components!`);
+
+            // Update stats
+            updateStats();
+        } else {
+            requestAnimationFrame(showWhenReady);
+        }
+    })();
+
+    // Update component statistics
+    function updateStats() {
+        const registry = window.ZephyrWasmRegistry || {};
+        const totalComponents = Object.keys(registry).length;
+        const activeComponents = document.querySelectorAll('[class*="-rb"], x-counter, x-toggle, x-todo-list, x-tabs-wasm').length;
+
+        document.getElementById('total-components').textContent = totalComponents;
+        document.getElementById('active-components').textContent = activeComponents;
+    }
+
+    // Event listeners for interactive demos
+    document.addEventListener('DOMContentLoaded', () => {
+        // Toggle status display
+        const toggle = document.querySelector('x-toggle');
+        const toggleStatus = document.getElementById('toggle-status');
+        const toggleValue = document.getElementById('toggle-value');
+
+        if (toggle) {
+            toggle.addEventListener('toggle-change', (e) => {
+                const checked = e.detail.checked;
+                toggleStatus.style.display = 'block';
+                toggleValue.textContent = checked ? 'ON' : 'OFF';
+                toggleStatus.className = checked ? 'status-message status-success' : 'status-message status-info';
+                log(`Toggle changed: ${checked ? 'ON' : 'OFF'}`);
+            });
+        }
+
+        // Button click logging
+        document.addEventListener('button-click', (e) => {
+            const button = e.target;
+            const label = button.getAttribute('label') || 'Button';
+            log(`Button clicked: ${label}`);
+        });
+
+        // Form input changes
+        document.addEventListener('input-change', (e) => {
+            log(`Input changed: ${e.detail.value}`);
+        });
+
+        document.addEventListener('select-change', (e) => {
+            log(`Select changed: ${e.detail.value}`);
+        });
+
+        document.addEventListener('checkbox-change', (e) => {
+            log(`Checkbox changed: ${e.detail.checked}`);
+        });
+
+        document.addEventListener('textarea-change', (e) => {
+            log(`Textarea changed (${e.detail.value.length} chars)`);
+        });
+
+        // Tab changes
+        document.addEventListener('tab-change', (e) => {
+            log(`Tab changed to: ${e.detail.tab}`);
+        });
+
+        // Update stats periodically
+        setInterval(updateStats, 5000);
+    });
+
+    // Add CSS for todo list
+    const style = document.createElement('style');
+    style.textContent = `
+        .todo-list {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .todo-input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .todo-input-group input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .todo-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .todo-items li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+        .todo-items li:hover {
+            background: #f9fafb;
+        }
+        .todo-items li.done span {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .todo-items li input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .todo-items li span {
+            flex: 1;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        .tabs-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tab-list {
+            display: flex;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-button:hover {
+            background: #f3f4f6;
+        }
+        .tab-button.active {
+            background: white;
+            color: #111827;
+            border-bottom-color: #4f46e5;
+        }
+        .tab-content {
+            padding: 1.5rem;
+            background: white;
+        }
+        .tab-panel {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+</body>
+</html>
