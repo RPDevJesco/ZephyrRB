@@ -27,11 +27,15 @@ module ZephyrWasm
       end
 
       def template(&block)
-        define_method(:template_impl, &block)
+        @template_block = block
+      end
+      
+      def get_template_block
+        @template_block
       end
     end
 
-    attr_reader :element, :signal
+    attr_reader :element, :signal, :state
 
     def initialize(element)
       @element = element
@@ -56,22 +60,21 @@ module ZephyrWasm
     end
 
     def render
-      return unless respond_to?(:template_impl)
+      template_block = self.class.get_template_block
+      return unless template_block
 
-      begin  # Added: Catch exceptions during render to prevent unwinding
-        builder = DOMBuilder.new(@element)
-        builder.instance_eval(&method(:template_impl))
+      begin
+        builder = DOMBuilder.new(@element, self)
+        # Use instance_exec to pass builder while maintaining component context
+        instance_exec(builder, &template_block)
         builder.apply
       rescue => e
-        puts "Render error: #{e.message}"  # Log or handle; prevent propagation
+        puts "Render error: #{e.message}"
+        puts e.backtrace.first(5).join("\n")
       end
     end
 
     # State management
-    def state
-      @state
-    end
-
     def set_state(key, value)
       @state[key] = value
       render

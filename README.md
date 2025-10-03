@@ -1,12 +1,70 @@
-# Zephyr - Option 3: Ruby → WASM Component System
+# 💎 Zephyr WASM
 
-**The most ambitious approach**: Write Ruby components that compile to WebAssembly and run entirely in the browser using ruby.wasm.
+**Build reactive web components using Ruby and WebAssembly**
 
-## 🚀 Revolutionary Concept
+Zephyr WASM is a lightweight framework for creating interactive web components using Ruby, compiled to WebAssembly and running entirely in the browser. Write your UI logic in Ruby with a declarative template syntax, and let the browser handle the rest.
 
-Write your frontend components in pure Ruby. No JavaScript. No transpilation. Just Ruby compiled to WebAssembly running natively in the browser.
+## ✨ Features
+
+- **Pure Ruby** - Write components in idiomatic Ruby
+- **Reactive State** - Automatic re-rendering on state changes
+- **Web Components** - Standard custom elements that work anywhere
+- **Zero Build Step** - Load Ruby files directly in the browser
+- **Lifecycle Hooks** - `on_connect` and `on_disconnect` callbacks
+- **Event Handling** - First-class support for DOM events
+- **Template DSL** - Clean, declarative component templates
+
+## 🚀 Quick Start
+
+### 1. Serve Your Files
+
+You need an HTTP server (ruby.wasm can't load files via `file://`):
+
+```bash
+# Python
+python3 -m http.server 8000
+
+# Ruby
+ruby -run -ehttpd . -p8000
+
+# Node
+npx http-server -p 8000
+```
+
+### 2. Create Your HTML
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Zephyr App</title>
+</head>
+<body>
+    <!-- Use your components -->
+    <x-counter initial="5"></x-counter>
+
+    <!-- Load Ruby WASM -->
+    <script src="https://cdn.jsdelivr.net/npm/@ruby/3.4-wasm-wasi@2.7.1/dist/browser.script.iife.js"></script>
+
+    <!-- Load your Ruby files -->
+    <script type="text/ruby" src="registry.rb"></script>
+    <script type="text/ruby" src="dom_builder.rb"></script>
+    <script type="text/ruby" src="component.rb"></script>
+    <script type="text/ruby" src="zephyr_wasm.rb"></script>
+    <script type="text/ruby" src="components.rb"></script>
+
+    <!-- Load the bridge -->
+    <script src="zephyr-bridge.js"></script>
+</body>
+</html>
+```
+
+### 3. Define Components
+
+Create `components.rb`:
 
 ```ruby
+# Counter component
 ZephyrWasm.component('x-counter') do
   observed_attributes :initial
 
@@ -15,315 +73,490 @@ ZephyrWasm.component('x-counter') do
     set_state(:count, count)
   end
 
-  template do
-    div(class: 'counter') do
-      button(on_click: ->(_) { 
-        set_state(:count, state[:count] - 1) 
-      }) { text('-') }
-      
-      span { text(state[:count]) }
-      
-      button(on_click: ->(_) { 
-        set_state(:count, state[:count] + 1) 
-      }) { text('+') }
+  template do |b|
+    comp = self
+
+    b.div(class: 'counter') do
+      b.button(on_click: ->(_) { comp.set_state(:count, comp.state[:count] - 1) }) do
+        b.text('-')
+      end
+
+      b.span { b.text(comp.state[:count]) }
+
+      b.button(on_click: ->(_) { comp.set_state(:count, comp.state[:count] + 1) }) do
+        b.text('+')
+      end
     end
   end
 end
 ```
 
-## Architecture
+### 4. Open in Browser
+
+Visit `http://localhost:8000` and see your component in action! 🎉
+
+## 📦 File Structure
 
 ```
-┌──────────────────────────────────────┐
-│         Ruby Source Code             │
-│     (Your Components in .rb)         │
-└──────────────┬───────────────────────┘
-               │
-               ▼
-       ┌───────────────┐
-       │  ruby.wasm    │
-       │  (CRuby 3.3)  │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │  WebAssembly  │
-       │    Binary     │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │   Browser     │
-       │  (Runtime)    │
-       └───────────────┘
-
-Everything runs client-side!
+your-project/
+├── index.html           # Your HTML page
+├── zephyr-bridge.js     # JavaScript bridge (required)
+├── registry.rb          # Component registry
+├── dom_builder.rb       # DOM manipulation
+├── component.rb         # Component base class
+├── zephyr_wasm.rb       # Core framework
+└── components.rb        # Your component definitions
 ```
 
-## Features
+## 📚 Component API
 
-### ✅ Pure Ruby
-- Write everything in Ruby, including event handlers
-- Full access to Ruby's standard library
-- Use gems (if they're WASM-compatible)
+### Basic Structure
 
-### ✅ True Reactivity
-- State management in Ruby
-- Automatic re-rendering on state changes
-- Ruby closures for event handlers
+```ruby
+ZephyrWasm.component('x-my-component') do
+  # Declare observed HTML attributes
+  observed_attributes :foo, :bar
 
-### ✅ DOM Integration
-- Direct DOM manipulation via JS bindings
-- Type-safe JS interop
-- Event listeners with signal-based cleanup
+  # Lifecycle: called when component is added to DOM
+  on_connect do
+    # Initialize state
+    set_state(:count, 0)
+  end
 
-### ✅ Zero Build Step (Almost)
-- No webpack, no babel, no npm
-- Ruby.wasm handles compilation
-- Components load dynamically
+  # Lifecycle: called when component is removed from DOM
+  on_disconnect do
+    # Cleanup if needed
+  end
 
-## How It Works
+  # Define your component's UI
+  template do |b|
+    comp = self  # Capture component reference
 
-### 1. Component Definition
+    b.div(class: 'my-component') do
+      b.h1 { b.text("Hello from Ruby!") }
+    end
+  end
+end
+```
+
+### State Management
+
+```ruby
+# Set state (triggers re-render)
+set_state(:key, value)
+
+# Read state
+state[:key]
+
+# Multiple state updates
+set_state(:count, 0)
+set_state(:loading, false)
+```
+
+### Attributes
+
+```ruby
+# Read HTML attributes
+value = self['data-id']
+
+# Write HTML attributes
+self['data-id'] = 'new-value'
+
+# Observed attributes automatically update state
+observed_attributes :user_id
+
+on_connect do
+  # state[:user_id] is automatically set from the attribute
+  puts state[:user_id]
+end
+```
+
+### Event Handlers
+
+```ruby
+template do |b|
+  comp = self
+
+  # Click handler
+  b.button(on_click: ->(_e) { comp.set_state(:clicked, true) }) do
+    b.text('Click me')
+  end
+
+  # Input handler
+  b.tag(:input, 
+    type: 'text',
+    on_input: ->(e) { comp.set_state(:value, e[:target][:value].to_s) }
+  )
+
+  # Any DOM event works: on_change, on_submit, on_keydown, etc.
+end
+```
+
+### Template DSL
+
+```ruby
+template do |b|
+  comp = self
+
+  # HTML elements (method name = tag name)
+  b.div(class: 'container') do
+    b.h1 { b.text('Title') }
+    b.p { b.text('Paragraph') }
+  end
+
+  # Attributes
+  b.div(id: 'main', class: 'active', data_value: '123')
+
+  # Generic tag method
+  b.tag(:input, type: 'text', placeholder: 'Enter text...')
+
+  # Text nodes
+  b.span { b.text('Hello') }
+
+  # Conditional rendering
+  b.render_if(comp.state[:show]) do
+    b.p { b.text('Visible!') }
+  end
+
+  # List rendering
+  b.render_each(comp.state[:items] || []) do |item|
+    b.li { b.text(item[:name]) }
+  end
+
+  # Boolean properties (checked, disabled, selected)
+  b.tag(:input, type: 'checkbox', checked: true)
+
+  # Inline styles
+  b.div(style: { color: 'red', font_size: '16px' })
+end
+```
+
+## 🎯 Complete Examples
+
+### Counter with Reset
+
+```ruby
+ZephyrWasm.component('x-counter') do
+  observed_attributes :initial
+
+  on_connect do
+    initial = (self['initial'] || '0').to_i
+    set_state(:count, initial)
+    set_state(:initial, initial)
+  end
+
+  template do |b|
+    comp = self
+    count = comp.state[:count] || 0
+
+    b.div(class: 'counter') do
+      b.button(on_click: ->(_) { comp.set_state(:count, count - 1) }) do
+        b.text('-')
+      end
+
+      b.span(class: 'count') { b.text(count) }
+
+      b.button(on_click: ->(_) { comp.set_state(:count, count + 1) }) do
+        b.text('+')
+      end
+
+      b.button(on_click: ->(_) { comp.set_state(:count, comp.state[:initial]) }) do
+        b.text('Reset')
+      end
+    end
+  end
+end
+```
+
+### Toggle Button
+
 ```ruby
 ZephyrWasm.component('x-toggle') do
   observed_attributes :label, :checked
 
   on_connect do
-    is_checked = self['checked'] == 'true'
-    set_state(:checked, is_checked)
+    set_state(:checked, self['checked'] == 'true')
   end
 
-  template do
-    button(
-      class: state[:checked] ? 'active' : '',
+  template do |b|
+    comp = self
+    is_checked = comp.state[:checked]
+    label = comp['label'] || 'Toggle'
+
+    b.button(
+      class: is_checked ? 'toggle active' : 'toggle',
       on_click: ->(_) {
-        new_state = !state[:checked]
-        set_state(:checked, new_state)
+        new_state = !comp.state[:checked]
+        comp.set_state(:checked, new_state)
+        comp['checked'] = new_state.to_s
+
+        # Dispatch custom event
+        event = JS.global[:CustomEvent].new(
+          'toggle-change',
+          { bubbles: true, detail: { checked: new_state }.to_js }.to_js
+        )
+        comp.element.call(:dispatchEvent, event)
       }
     ) do
-      text(self['label'] || 'Toggle')
+      b.text(label)
     end
   end
 end
 ```
 
-### 2. Custom Element Registration
-The framework automatically creates a JavaScript custom element that wraps your Ruby component:
+### Todo List
 
-```javascript
-customElements.define('x-toggle', class extends HTMLElement {
-  connectedCallback() {
-    // Initializes Ruby component instance
-    window.ZephyrWasm.initComponent(this, 'x-toggle');
-  }
-});
+```ruby
+ZephyrWasm.component('x-todo-list') do
+  on_connect do
+    set_state(:todos, [])
+    set_state(:input_value, '')
+  end
+
+  template do |b|
+    comp = self
+
+    b.div(class: 'todo-list') do
+      # Input section
+      b.div(class: 'input-group') do
+        b.tag(:input,
+          type: 'text',
+          placeholder: 'Enter a task...',
+          value: comp.state[:input_value] || '',
+          on_input: ->(e) { comp.set_state(:input_value, e[:target][:value].to_s) }
+        )
+
+        b.button(
+          on_click: ->(_) {
+            value = comp.state[:input_value]&.strip
+            if value && !value.empty?
+              todos = (comp.state[:todos] || []).dup
+              todos << { 
+                id: JS.global[:Date].new.call(:getTime), 
+                text: value, 
+                done: false 
+              }
+              comp.set_state(:todos, todos)
+              comp.set_state(:input_value, '')
+            end
+          }
+        ) { b.text('Add') }
+      end
+
+      # Todo items
+      b.tag(:ul) do
+        todos = comp.state[:todos] || []
+        b.render_each(todos) do |todo|
+          b.tag(:li, class: todo[:done] ? 'done' : '') do
+            b.tag(:input,
+              type: 'checkbox',
+              checked: !!todo[:done],
+              on_change: ->(e) {
+                updated_todos = (comp.state[:todos] || []).map { |t|
+                  t[:id] == todo[:id] ? { **t, done: !!e[:target][:checked] } : t
+                }
+                comp.set_state(:todos, updated_todos)
+              }
+            )
+
+            b.span { b.text(todo[:text]) }
+
+            b.button(
+              class: 'delete',
+              on_click: ->(_) {
+                filtered = (comp.state[:todos] || []).reject { |t| t[:id] == todo[:id] }
+                comp.set_state(:todos, filtered)
+              }
+            ) { b.text('×') }
+          end
+        end
+      end
+    end
+  end
+end
 ```
 
-### 3. Ruby Runtime
-Ruby.wasm provides the full CRuby runtime compiled to WebAssembly:
-- MRI Ruby 3.3+
-- Standard library
-- JS interop via `js` gem
-- Garbage collection
+## 🔧 Advanced Usage
 
-### 4. State Management
+### Custom Events
+
 ```ruby
-# State is stored per-component instance
-set_state(:count, 0)
-
-# Access state
-state[:count]
-
-# State changes trigger re-render
-set_state(:count, state[:count] + 1)
-```
-
-### 5. Event Handling
-```ruby
-button(
-  on_click: ->(event) {
-    puts "Clicked! Target: #{event[:target]}"
-    # Full access to DOM events
-  },
-  on_mouseenter: ->(_) {
-    # Multiple event handlers
-  }
+# Dispatch custom events from your component
+event = JS.global[:CustomEvent].new(
+  'my-event',
+  { 
+    bubbles: true, 
+    detail: { foo: 'bar' }.to_js 
+  }.to_js
 )
+element.call(:dispatchEvent, event)
 ```
 
-## Running the Demo
+### DOM Queries
 
-### Local Server
-```bash
-# Simple HTTP server
-python3 -m http.server 8000
-
-# Or with Ruby
-ruby -run -ehttpd . -p8000
-
-# Visit http://localhost:8000/examples/demo.html
-```
-
-### What You'll See
-1. **Counter** - State management with increment/decrement
-2. **Toggle** - Boolean state and event dispatch
-3. **Todo List** - Array state with add/remove/complete
-4. **Tabs** - Complex UI with navigation state
-
-## Performance Characteristics
-
-### Startup Time
-- **Ruby.wasm load**: ~500ms - 1s (one-time)
-- **Component init**: <10ms per component
-- **First render**: <50ms
-
-### Runtime Performance
-- **Re-renders**: ~5-10ms (comparable to React)
-- **State updates**: ~1-2ms
-- **Event handling**: Native JS speed
-
-### Memory
-- **Ruby.wasm**: ~15-20MB (shared across all components)
-- **Per component**: ~1-5KB
-
-## Pros & Cons
-
-### ✅ Advantages
-
-1. **Pure Ruby** - No context switching, one language
-2. **Full Ruby Power** - Enumerables, blocks, metaprogramming
-3. **Type Safety** - Ruby's type system + RBS
-4. **Familiar Syntax** - Rubyists feel at home
-5. **Standard Library** - Use Ruby's excellent stdlib
-6. **Debugging** - Ruby stack traces, debugger support
-7. **Gem Ecosystem** - Use WASM-compatible gems
-
-### ⚠️ Challenges
-
-1. **Initial Load** - Ruby.wasm is ~10-15MB gzipped
-2. **Startup Time** - 500ms-1s to initialize runtime
-3. **Browser Support** - Requires WASM support (IE11 ✗)
-4. **Gem Compatibility** - Not all gems work in WASM
-5. **Debugging Tools** - Limited browser devtools integration
-6. **Learning Curve** - New mental model for Ruby devs
-
-## Use Cases
-
-### ✅ Excellent For
-- **Ruby-only teams** wanting to build rich UIs
-- **Internal tools** where load time is acceptable
-- **Progressive web apps** with service worker caching
-- **Prototypes** and MVPs in pure Ruby
-- **Educational tools** teaching Ruby in the browser
-
-### ⚠️ Consider Alternatives For
-- **Public-facing sites** with strict performance budgets
-- **SEO-critical pages** (no SSR yet)
-- **Low-powered devices** (limited WASM performance)
-- **IE11 support** requirements
-
-## Roadmap
-
-### Phase 1: Core Framework ✅
-- [x] Component DSL
-- [x] State management
-- [x] Event handling
-- [x] DOM builder
-- [x] Lifecycle hooks
-
-### Phase 2: Developer Experience
-- [ ] Hot module reloading
-- [ ] Better error messages
-- [ ] Component devtools
-- [ ] Testing framework
-- [ ] Documentation site
-
-### Phase 3: Performance
-- [ ] Lazy component loading
-- [ ] WASM streaming compilation
-- [ ] Service worker caching
-- [ ] Code splitting
-- [ ] Tree shaking
-
-### Phase 4: Ecosystem
-- [ ] Component library (15+ components)
-- [ ] Router
-- [ ] Form validation
-- [ ] HTTP client
-- [ ] State persistence
-
-## Technical Deep Dive
-
-### Ruby.wasm Integration
 ```ruby
-require 'js'
-
-# Access JavaScript globals
-window = JS.global[:window]
-document = JS.global[:document]
-
-# Create JavaScript objects
-event = JS.global[:CustomEvent].new('my-event', {
-  bubbles: true,
-  detail: { foo: 'bar' }.to_js
-}.to_js)
-
-# Call JavaScript methods
-element.call(:addEventListener, 'click', handler.to_js)
+on_connect do
+  # Query inside component
+  button = query('.my-button')
+  
+  # Query all
+  items = query_all('.item')
+end
 ```
 
-### Memory Management
-Ruby's GC manages Ruby objects. Browser's GC manages DOM/JS objects. The `js` gem handles the boundary with weak references.
+### Accessing the Element
 
-### Performance Optimization
-1. **Minimize re-renders** - Smart diffing
-2. **Batch state updates** - Async rendering
-3. **Virtual DOM** (future) - Skip unchanged nodes
-4. **WASM streaming** - Start compiling during download
+```ruby
+on_connect do
+  # Direct access to the DOM element
+  element[:id] = 'my-component'
+  element.call(:setAttribute, 'data-loaded', 'true')
+end
+```
 
-## Comparison with Other Frameworks
+### Working with JavaScript
 
-| Feature | Zephyr WASM | React | Svelte | Lit |
-|---------|-------------|-------|--------|-----|
-| Language | Ruby | JS/JSX | Svelte | JS |
-| Runtime | Ruby.wasm | React | None | Lit |
-| Bundle Size | 15MB | ~40KB | ~2KB | ~15KB |
-| Initial Load | Slow | Fast | Fast | Fast |
-| Runtime Speed | Good | Great | Great | Great |
-| Developer Experience | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| Ruby Ecosystem | Yes | No | No | No |
+```ruby
+# Call JavaScript functions
+JS.global[:console].call(:log, 'Hello from Ruby!')
 
-## Contributing
+# Access global objects
+date = JS.global[:Date].new
+timestamp = date.call(:getTime)
 
-This is an MVP/proof-of-concept. Major areas needing work:
+# Call methods on JS objects
+element.call(:scrollIntoView)
+```
 
-1. **Error handling** - Better error boundaries
-2. **Testing** - Unit test framework
-3. **Documentation** - API docs, guides
-4. **Performance** - Benchmarks, optimizations
-5. **Components** - Build component library
+## 🎨 Styling
 
-## License
+Add CSS to your HTML:
 
-MIT
+```html
+<style>
+  .counter {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
 
-## Credits
+  .counter button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background: #667eea;
+    color: white;
+    cursor: pointer;
+  }
 
-Built on:
-- [ruby.wasm](https://github.com/ruby/ruby.wasm) - Ruby compiled to WebAssembly
-- [js gem](https://github.com/ruby/js) - Ruby ↔ JavaScript interop
+  .counter button:hover {
+    background: #5568d3;
+  }
+</style>
+```
 
-Inspired by:
-- React (component model)
-- Svelte (compiler approach)
-- Lit (web components)
-- Your ZephyrJS (elegant API design)
+## ⚠️ Important Notes
+
+### Must Use HTTP Server
+
+Ruby WASM cannot load files via `file://` protocol. Always serve your files:
+
+```bash
+python3 -m http.server 8000
+```
+
+### Component Names Must Include Hyphen
+
+Custom element names require a hyphen:
+
+```ruby
+# ✅ Good
+ZephyrWasm.component('x-counter')
+ZephyrWasm.component('my-button')
+
+# ❌ Bad
+ZephyrWasm.component('counter')  # Missing hyphen!
+```
+
+### Capture Component Reference in Templates
+
+Always capture `self` as a local variable in templates:
+
+```ruby
+template do |b|
+  comp = self  # ✅ Capture this!
+
+  b.button(on_click: ->(_) {
+    comp.set_state(:clicked, true)  # Use comp, not self
+  })
+end
+```
+
+### Event Handlers Return Procs
+
+Event handlers should be Ruby procs that will be converted to JS:
+
+```ruby
+# ✅ Good
+on_click: ->(_e) { comp.set_state(:count, 1) }
+
+# ❌ Bad - don't call .to_js yourself
+on_click: ->(_e) { comp.set_state(:count, 1) }.to_js
+```
+
+## 🐛 Troubleshooting
+
+### Components Don't Appear
+
+1. Check browser console for errors
+2. Ensure you're using an HTTP server (not `file://`)
+3. Verify all `.rb` files are in the same directory as `index.html`
+4. Check Network tab for 404 errors
+
+### "Component Already Registered" Warning
+
+This happens if you reload without refreshing. It's harmless but you can add:
+
+```ruby
+ZephyrWasm::Registry.clear
+```
+
+### State Not Updating
+
+Make sure you're using `set_state` and not modifying state directly:
+
+```ruby
+# ✅ Good
+set_state(:count, state[:count] + 1)
+
+# ❌ Bad - won't trigger re-render
+state[:count] += 1
+```
+
+## 🏗️ How It Works
+
+1. **Ruby Files Load**: Browser fetches your `.rb` files via `<script type="text/ruby" src="...">`
+2. **Components Register**: Ruby code registers component metadata in `window.ZephyrWasmRegistry`
+3. **Bridge Watches**: `zephyr-bridge.js` uses a Proxy to watch for new components
+4. **Custom Elements Defined**: Bridge defines custom elements using `setTimeout()` to avoid nested VM calls
+5. **Component Lifecycle**: When elements connect to DOM, Ruby component instances are created
+6. **Reactive Rendering**: State changes trigger re-renders using DocumentFragment for efficiency
+
+## 📄 License
+
+MIT License - feel free to use in your projects!
+
+## 🤝 Contributing
+
+This is an experimental framework. Issues and pull requests welcome!
+
+## 🙏 Credits
+
+Built with:
+- [ruby.wasm](https://github.com/ruby/ruby.wasm) - Ruby in the browser
+- Web Components - Standard browser APIs
+- Love for Ruby 💎
 
 ---
 
-**Status**: 🚧 Experimental / Proof of Concept
-
-This is a technical demonstration showing that Ruby WASM components are possible and practical. For production use, significant work remains on performance, tooling, and ecosystem.
-ruby -run -ehttpd . -p8000
-npm i @ruby/3.3-wasm-wasi 
+**Happy coding with Ruby and WebAssembly!** 🚀

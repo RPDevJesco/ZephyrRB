@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 require 'js'
-require 'json'  # Added for to_json support
-require_relative 'component'
-require_relative 'dom_builder'
-require_relative 'registry'
+require 'json'
 
 # Zephyr WASM - Ruby Web Components compiled to WebAssembly
 # This runs entirely in the browser using ruby.wasm
 module ZephyrWasm
-  @@instance_map = ObjectSpace::WeakMap.new  # Added for storing instances without assigning to JS properties
+  @@instance_map = ObjectSpace::WeakMap.new
 
   class << self
     def component(tag_name, &block)
@@ -28,46 +25,21 @@ module ZephyrWasm
     end
 
     def define_custom_element(tag_name, component_class)
-      # Create a JavaScript class that wraps our Ruby component
-      js_class = JS.eval(<<~JAVASCRIPT)
-        (function() {
-          class RubyComponent extends HTMLElement {
-            constructor() {
-              super();
-              this._abortController = new AbortController();
-            }
+      # Store observed attributes for this component
+      observed_attrs = component_class.observed_attrs || []
 
-            connectedCallback() {
-              // This will be called from Ruby
-              if (window.ZephyrWasm && window.ZephyrWasm.initComponent) {
-                window.ZephyrWasm.initComponent(this, '#{tag_name}');
-              }
-            }
+      # Initialize registry if needed (safe operation)
+      unless JS.global[:ZephyrWasmRegistry]
+        JS.global[:ZephyrWasmRegistry] = {}.to_js
+      end
 
-            disconnectedCallback() {
-              this._abortController.abort();
-              if (window.ZephyrWasm && window.ZephyrWasm.disconnectComponent) {
-                window.ZephyrWasm.disconnectComponent(this);
-              }
-            }
+      # Store component metadata (safe - just property assignment)
+      JS.global[:ZephyrWasmRegistry][tag_name] = {
+        observedAttributes: observed_attrs
+      }.to_js
 
-            attributeChangedCallback(name, oldValue, newValue) {
-              if (window.ZephyrWasm && window.ZephyrWasm.attributeChangedComponent) {
-                window.ZephyrWasm.attributeChangedComponent(this, name, oldValue, newValue);
-              }
-            }
-
-            static get observedAttributes() {
-              return #{component_class.observed_attrs.to_json};
-            }
-          }
-          
-          customElements.define('#{tag_name}', RubyComponent);
-          return RubyComponent;
-        })()
-      JAVASCRIPT
-
-      js_class
+      # JavaScript will poll this registry and register the custom elements
+      # This avoids nested VM operations during initialization
     end
 
     def init_component(element, tag_name)
@@ -87,14 +59,12 @@ module ZephyrWasm
       instance.render
     end
 
-    # Added: Handle disconnection via global method
     def disconnect_component(element)
       instance = @@instance_map[element]
       instance.disconnected if instance
-      @@instance_map.delete(element)  # Optional cleanup
+      @@instance_map.delete(element)
     end
 
-    # Added: Handle attribute changes via global method
     def attribute_changed_component(element, name, old_value, new_value)
       instance = @@instance_map[element]
       instance.attribute_changed(name, old_value, new_value) if instance

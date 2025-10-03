@@ -1,15 +1,18 @@
+# dom_builder.rb
 # frozen_string_literal: true
 
 require 'js'
 
 module ZephyrWasm
   class DOMBuilder
-    attr_reader :root, :current
+    attr_reader :root, :component
 
-    def initialize(root)
+    def initialize(root, component)
       @root = root
-      @current = root
-      @elements = []
+      @component = component
+      @doc = JS.global[:document]
+      @fragment = @doc.call(:createDocumentFragment)
+      @stack = [@fragment] # current parent stack
     end
 
     def method_missing(method_name, *args, **attrs, &block)
@@ -17,71 +20,75 @@ module ZephyrWasm
     end
 
     def tag(name, *args, **attrs, &block)
-      element = JS.global[:document].call(:createElement, name)
+      el = @doc.call(:createElement, name)
 
-      # Set attributes
+      # attributes & event handlers
       attrs.each do |key, value|
         next if value.nil?
-        
-        if key.to_s.start_with?('on_')
-          # Event handler
-          event_name = key.to_s.sub('on_', '')
-          handler = value.to_js
-          element.call(:addEventListener, event_name, handler)
+
+        if key.to_s.start_with?('on_') # event handler
+          event = key.to_s.sub('on_', '')
+          handler =
+            if value.respond_to?(:to_proc)
+              # Ruby lambda/proc provided (common case before you call .to_js)
+              value.to_js
+            elsif value.respond_to?(:to_js)
+              # Ruby object with .to_js (e.g., you passed ->{}.to_js explicitly)
+              value.to_js
+            else
+              # Already a JS::Object / native function
+              value
+            end
+          el.call(:addEventListener, event, handler)
+
         elsif key == :class || key == :classes
-          element[:className] = value.to_s
+          el[:className] = value.to_s
+
         elsif key == :style && value.is_a?(Hash)
-          value.each { |k, v| element[:style][k.to_s.gsub('_', '-')] = v }
+          value.each { |k, v| el[:style][k.to_s.gsub('_', '-')] = v }
+
+        elsif key == :checked || key == :disabled || key == :selected
+          # boolean properties should be set on the property, not attribute
+          el[key] = !!value
+
         else
-          element.call(:setAttribute, key.to_s, value.to_s)
+          el.call(:setAttribute, key.to_s, value.to_s)
         end
       end
 
-      # Set text content if provided
-      if args.any?
-        element[:textContent] = args.first.to_s
-      end
+      el[:textContent] = args.first.to_s if args.any?
 
-      # Process children
+      # append to current parent; descend if block given
+      parent = @stack.last
+      parent.call(:appendChild, el)
       if block
-        old_current = @current
-        @current = element
-        instance_eval(&block)
-        @current = old_current
+        @stack.push(el)
+        yield
+        @stack.pop
       end
 
-      @elements << element
-      @current.call(:appendChild, element)
-
-      element
+      el
     end
 
     def text(content)
-      text_node = JS.global[:document].call(:createTextNode, content.to_s)
-      @current.call(:appendChild, text_node)
-      text_node
+      node = @doc.call(:createTextNode, content.to_s)
+      @stack.last.call(:appendChild, node)
+      node
     end
 
     def apply
-      # Clear existing content
-      @root[:innerHTML] = ''
-      
-      # Append all built elements
-      @elements.each do |element|
-        @root.call(:appendChild, element)
-      end
+      @root.call(:replaceChildren, @fragment)
+      # reset for the next render
+      @fragment = @doc.call(:createDocumentFragment)
+      @stack = [@fragment]
     end
 
-    # Helper for conditional rendering
+    # Helpers
     def render_if(condition, &block)
-      instance_eval(&block) if condition
+      yield if condition
     end
-
-    # Helper for list rendering
     def render_each(collection, &block)
-      collection.each do |item|
-        block.call(item)
-      end
+      collection.each { |item| block.call(item) }
     end
   end
 end
