@@ -26,8 +26,9 @@ module ZephyrWasm
       attrs.each do |key, value|
         next if value.nil?
 
-        if key.to_s.start_with?('on_') # event handler
-          event = key.to_s.sub('on_', '')
+        key_str = key.to_s
+        if key_str.start_with?('on_') # event handler
+          event = key_str.sub('on_', '')
           handler =
             if value.respond_to?(:to_proc)
               # Ruby lambda/proc provided (common case before you call .to_js)
@@ -45,7 +46,7 @@ module ZephyrWasm
           el[:className] = value.to_s
 
         elsif key == :style && value.is_a?(Hash)
-          value.each { |k, v| el[:style][k.to_s.gsub('_', '-')] = v }
+          value.each { |k, v| el[:style][k.to_s.tr('_', '-')] = v }
 
         elsif key == :checked || key == :disabled || key == :selected
           # boolean properties should be set on the property, not attribute
